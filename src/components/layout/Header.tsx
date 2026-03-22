@@ -71,10 +71,17 @@ export const Header: React.FC = () => {
             {/* Right Buttons */}
             <div className="hidden md:flex items-center space-x-3">
               <Link
-                to="/orcamento"
-                className="flex items-center space-x-2 px-3 py-1 rounded-lg border border-slate-200 text-slate-700 text-[10px] font-bold hover:bg-slate-50 transition-all"
+                to="/carreiras"
+                className="flex items-center space-x-2 px-3 py-1 rounded-lg border border-blue-200 text-blue-700 text-[10px] font-bold hover:bg-blue-50 transition-all"
               >
-                <ShoppingCart className="h-3.5 w-3.5 text-slate-400" />
+                <Briefcase className="h-3.5 w-3.5 text-blue-400" />
+                <span>Trabalhe Connosco</span>
+              </Link>
+              <Link
+                to="/orcamento"
+                className="flex items-center space-x-2 px-3 py-1 rounded-lg bg-[#1e3a8a] text-white text-[10px] font-bold hover:bg-blue-800 transition-all shadow-sm"
+              >
+                <ShoppingCart className="h-3.5 w-3.5 text-blue-200" />
                 <span>{t('nav.quote')}</span>
               </Link>
             </div>
@@ -139,6 +146,14 @@ export const Header: React.FC = () => {
                 }}
                 className="pt-4 grid grid-cols-1 gap-2"
               >
+                <Link
+                  to="/carreiras"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl border border-blue-200 text-blue-700 text-sm font-bold"
+                >
+                  <Briefcase className="h-4 w-4" />
+                  <span>Trabalhe Connosco</span>
+                </Link>
                 <Link
                   to="/orcamento"
                   onClick={() => setIsOpen(false)}

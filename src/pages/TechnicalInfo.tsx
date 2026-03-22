@@ -17,7 +17,7 @@ interface TechnicalFile {
 export default function TechnicalInfo() {
   const [searchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
-  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [isUnlocked, setIsUnlocked] = useState(true);
   const [showUnlockForm, setShowUnlockForm] = useState(false);
   const [formData, setFormData] = useState({
     name: sessionStorage.getItem('clorosol_user_name') || '',
@@ -243,23 +243,10 @@ export default function TechnicalInfo() {
                           whileTap={{ scale: 0.95 }}
                           transition={{ type: "spring", stiffness: 400, damping: 17 }}
                           onClick={() => handleDownload(product.technical_sheet_url, `Ficha_Tecnica_${product.name}`)}
-                          className={`inline-flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-                            isUnlocked 
-                              ? 'bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white shadow-sm hover:shadow-md' 
-                              : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
-                          }`}
+                          className="inline-flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-bold transition-all bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white shadow-sm hover:shadow-md"
                         >
-                          {isUnlocked ? (
-                            <>
-                              <Download className="w-3.5 h-3.5" />
-                              Download PDF
-                            </>
-                          ) : (
-                            <>
-                              <Lock className="w-3.5 h-3.5" />
-                              Solicitar Acesso
-                            </>
-                          )}
+                          <Download className="w-3.5 h-3.5" />
+                          Download PDF
                         </motion.button>
                       </td>
                     </motion.tr>
@@ -334,23 +321,10 @@ export default function TechnicalInfo() {
                             whileTap={{ scale: 0.95 }}
                             transition={{ type: "spring", stiffness: 400, damping: 17 }}
                             onClick={() => handleDownload(file.download_url, file.name)}
-                            className={`inline-flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-                              isUnlocked 
-                                ? 'bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white shadow-sm hover:shadow-md' 
-                                : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
-                            }`}
+                            className="inline-flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-bold transition-all bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white shadow-sm hover:shadow-md"
                           >
-                            {isUnlocked ? (
-                              <>
-                                <Download className="w-3.5 h-3.5" />
-                                Download
-                              </>
-                            ) : (
-                              <>
-                                <Lock className="w-3.5 h-3.5" />
-                                Bloqueado
-                              </>
-                            )}
+                            <Download className="w-3.5 h-3.5" />
+                            Download
                           </motion.button>
                         </td>
                       </motion.tr>
