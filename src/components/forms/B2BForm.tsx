@@ -23,9 +23,14 @@ export const B2BForm: React.FC = () => {
   // Handle "add" from URL
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const addId = params.get('add');
-    if (addId && PRODUCTS.find(p => p.id === addId)) {
-      addProduct(addId);
+    const addIds = params.get('add');
+    if (addIds) {
+      const ids = addIds.split(',');
+      ids.forEach(id => {
+        if (PRODUCTS.find(p => p.id === id)) {
+          addProduct(id);
+        }
+      });
       // Clean URL
       window.history.replaceState({}, '', window.location.pathname);
     }

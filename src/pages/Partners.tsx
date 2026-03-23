@@ -209,22 +209,38 @@ export function Partners() {
   }
 
   return (
-    <div className="pt-32 pb-20 bg-slate-50 min-h-screen">
+    <div className="pt-20 pb-20 bg-slate-50 min-h-screen">
+      {/* Hero Section with Background Image */}
+      <section className="relative h-[50vh] flex items-center overflow-hidden mb-12">
+        <div className="absolute inset-0 z-0">
+          <img
+            src="https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&q=80&w=1920"
+            alt="Partners Background"
+            className="w-full h-full object-cover"
+            referrerPolicy="no-referrer"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-900/80 to-transparent" />
+        </div>
+
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="max-w-3xl"
+          >
+            <div className="inline-flex items-center space-x-2 bg-blue-500/20 border border-blue-500/30 text-blue-300 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider mb-6 backdrop-blur-sm">
+              <Users className="w-3.5 h-3.5" />
+              <span>Parcerias Clorosol</span>
+            </div>
+            <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 tracking-tight">Seja Nosso Parceiro</h1>
+            <p className="text-xl text-blue-50 leading-relaxed font-medium">
+              A Clorosol aposta na modernização constante e na qualidade superior. Procuramos parceiros que valorizem produtos certificados, competitivos e uma marca com mais de 50 anos de história em Portugal.
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
-        >
-          <div className="inline-flex items-center space-x-2 bg-blue-100 text-[#1e3a8a] px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider mb-4">
-            <Users className="w-3.5 h-3.5" />
-            <span>Parcerias Clorosol</span>
-          </div>
-          <h1 className="text-4xl md:text-5xl font-black text-[#1e3a8a] mb-6 tracking-tight">Seja Nosso Parceiro</h1>
-          <p className="text-lg text-slate-600 max-w-3xl mx-auto leading-relaxed">
-            A Clorosol aposta na modernização constante e na qualidade superior. Procuramos parceiros que valorizem produtos certificados, competitivos e uma marca com mais de 50 anos de história em Portugal.
-          </p>
-        </motion.div>
 
         {/* Type Selector */}
         <div className="flex justify-center mb-12">

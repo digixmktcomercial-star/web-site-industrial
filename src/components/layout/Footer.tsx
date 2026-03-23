@@ -60,7 +60,7 @@ export const Footer: React.FC = () => {
               <li><Link to="/empresa" className="hover:text-blue-500 transition-colors">{t('nav.about')}</Link></li>
               <li><Link to="/contactos" className="hover:text-blue-500 transition-colors">{t('nav.contact')}</Link></li>
               <li><Link to="/produtos" className="hover:text-blue-500 transition-colors">{t('nav.products')}</Link></li>
-              <li><Link to="/informacao-tecnica" className="hover:text-blue-500 transition-colors">{t('nav.technical')}</Link></li>
+              <li><Link to="/sustentabilidade" className="hover:text-blue-500 transition-colors">{t('nav.tech')}</Link></li>
               <li><Link to="/parceiros" className="hover:text-blue-500 transition-colors">{t('nav.partners')}</Link></li>
               <li><Link to="/carreiras" className="hover:text-blue-500 transition-colors">{t('nav.careers')}</Link></li>
               <li><Link to="/orcamento" className="hover:text-blue-500 transition-colors">{t('nav.quote')}</Link></li>
@@ -117,7 +117,10 @@ export const Footer: React.FC = () => {
           </div>
         </div>
         <div className="mt-20 pt-8 border-t border-slate-900 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] uppercase tracking-widest font-bold">
-          <p>&copy; {new Date().getFullYear()} Clorosol - Fabrico de Lixívias e Detergentes, Lda. {t('footer.rights')}</p>
+          <div className="flex flex-col md:flex-row items-center gap-4">
+            <p>&copy; {new Date().getFullYear()} Clorosol - Fabrico de Lixívias e Detergentes, Lda. {t('footer.rights')}</p>
+            <Link to="/admin" className="text-slate-800 hover:text-slate-600 transition-colors">Admin</Link>
+          </div>
           <div className="flex space-x-6 items-center">
             <a href="#" className="hover:text-white transition-colors">{t('footer.privacy')}</a>
             <a href="#" className="hover:text-white transition-colors">{t('footer.terms')}</a>

@@ -3,6 +3,7 @@ import { Check, ShoppingCart, Plus, ArrowRight, FileText, Share2, Facebook, Link
 import { Product } from '../../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 interface ProductCardProps {
   product: Product;
@@ -11,6 +12,7 @@ interface ProductCardProps {
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect, layout = 'grid' }) => {
+  const { t } = useTranslation();
   const [showShare, setShowShare] = React.useState(false);
   const [zoomPos, setZoomPos] = React.useState({ x: 50, y: 50 });
   const [isZoomed, setIsZoomed] = React.useState(false);
@@ -33,6 +35,25 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect, lay
     }
   });
 
+  React.useEffect(() => {
+    const checkWishlist = () => {
+      const saved = localStorage.getItem('clorosol_wishlist');
+      if (saved) {
+        try {
+          const wishlist = JSON.parse(saved);
+          setIsWishlisted(Array.isArray(wishlist) && wishlist.includes(product.id));
+        } catch {
+          setIsWishlisted(false);
+        }
+      } else {
+        setIsWishlisted(false);
+      }
+    };
+
+    window.addEventListener('wishlistUpdated', checkWishlist);
+    return () => window.removeEventListener('wishlistUpdated', checkWishlist);
+  }, [product.id]);
+
   const toggleWishlist = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -53,6 +74,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect, lay
     
     localStorage.setItem('clorosol_wishlist', JSON.stringify(wishlist));
     setIsWishlisted(!isWishlisted);
+    
+    // Notify other components (like Header) to update count
+    window.dispatchEvent(new Event('wishlistUpdated'));
   };
 
   const shareUrl = `${window.location.origin}/produtos?id=${product.id}`;
@@ -66,42 +90,29 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect, lay
     window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`, '_blank');
   };
 
-  const handleDownload = async (e: React.MouseEvent) => {
+  const handleDownload = (e: React.MouseEvent) => {
     e.preventDefault();
     if (!product.technical_sheet_url) return;
 
-    // Verificar se o acesso já foi desbloqueado (consistência com TechnicalInfo)
-    const isUnlocked = sessionStorage.getItem('clorosol_docs_unlocked') === 'true';
+    // Download direto sem bloqueio
+    const link = document.createElement('a');
+    link.href = product.technical_sheet_url;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
     
-    if (!isUnlocked) {
-      // Se não estiver desbloqueado, redireciona para a página técnica para preencher o formulário
-      window.location.href = `/informacao-tecnica?search=${product.name}`;
-      return;
-    }
-
-    try {
-      const response = await fetch(product.technical_sheet_url);
-      if (!response.ok) throw new Error('Falha no download');
-      
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      
-      // Nome do ficheiro preservando a designação original
-      const filename = `Ficha_Tecnica_${product.name.replace(/\s+/g, '_')}.pdf`;
-      link.download = filename;
-      
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Erro ao descarregar:', error);
-      // Fallback: abrir em novo separador
-      window.open(product.technical_sheet_url, '_blank');
-    }
+    // Nome do ficheiro preservando a designação original
+    const filename = `Ficha_Tecnica_${product.name.replace(/\s+/g, '_')}.pdf`;
+    link.download = filename;
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
+
+  // Helper to translate product data
+  const productName = t(`products.items.${product.id}.name`, product.name);
+  const productDescription = t(`products.items.${product.id}.description`, product.description);
+  const productCategory = t(`products.categories.${product.category.toLowerCase()}`, product.category);
 
   if (layout === 'list') {
     return (
@@ -131,7 +142,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect, lay
         >
           <motion.img
             src={product.image}
-            alt={product.name}
+            alt={productName}
             className="max-w-full max-h-full object-contain"
             animate={{
               scale: isZoomed ? 2 : 1,
@@ -148,7 +159,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect, lay
               </div>
             </div>
           )}
-
           {/* Action Buttons (Top Right) */}
           <div className="absolute top-4 right-4 flex items-center gap-2 z-20">
             {/* Share Button */}
@@ -194,25 +204,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect, lay
                 )}
               </AnimatePresence>
             </div>
-
-            {/* Wishlist Button */}
-            <div className="group/wishlist">
-              <button
-                onClick={toggleWishlist}
-                className={`p-2 rounded-full backdrop-blur-md border transition-all duration-300 ${
-                  isWishlisted 
-                    ? 'bg-red-50 border-red-100 text-red-500 shadow-sm' 
-                    : 'bg-white/80 border-slate-100 text-slate-400 hover:text-red-400 hover:bg-white shadow-sm'
-                }`}
-              >
-                <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-current' : ''}`} />
-              </button>
-              {/* Tooltip */}
-              <div className="absolute bottom-full right-0 mb-2 w-32 bg-slate-900 text-white text-[10px] font-bold py-2 px-3 rounded-lg opacity-0 group-hover/wishlist:opacity-100 transition-opacity pointer-events-none shadow-xl z-20 text-center leading-tight">
-                {isWishlisted ? 'Remover da Lista' : 'Lista de Desejos'}
-                <div className="absolute top-full right-3 border-4 border-transparent border-t-slate-900" />
-              </div>
-            </div>
           </div>
         </div>
 
@@ -221,7 +212,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect, lay
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-bold text-blue-600 uppercase tracking-[0.2em]">
-                {product.category}
+                {productCategory}
               </span>
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                 {product.volume || '1L'}
@@ -230,10 +221,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect, lay
             
             <div>
               <h3 className="text-xl font-black text-slate-900 group-hover:text-blue-700 transition-colors leading-tight mb-2">
-                {product.name}
+                {productName}
               </h3>
               <p className="text-sm text-slate-500 leading-relaxed font-medium">
-                {product.description}
+                {productDescription}
               </p>
             </div>
 
@@ -243,7 +234,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect, lay
                 className="inline-flex items-center gap-1.5 text-[10px] font-bold text-blue-600 hover:text-blue-800 transition-colors uppercase tracking-widest"
               >
                 <FileText className="w-3.5 h-3.5" />
-                Ficha Técnica
+                {t('common.technical_sheet')}
               </button>
             </div>
           </div>
@@ -254,15 +245,36 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect, lay
               className="flex-1 max-w-[180px] bg-[#1e3a8a] text-white px-6 py-3 rounded-xl text-[10px] font-black hover:bg-blue-800 transition-all flex items-center justify-center space-x-2 shadow-lg shadow-blue-900/20 active:scale-95 group/btn"
             >
               <Plus className="w-3.5 h-3.5 transition-transform group-hover/btn:rotate-90" />
-              <span>ADICIONAR</span>
+              <span>{t('common.add')}</span>
             </button>
             
-            <button 
-              onClick={() => window.location.href = `/orcamento?add=${product.id}`}
-              className="w-10 h-10 rounded-xl border border-slate-100 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:border-blue-100 hover:bg-blue-50 transition-all"
-            >
-              <ArrowRight className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-2">
+              {/* Wishlist Button */}
+              <div className="relative group/wishlist">
+                <button
+                  onClick={toggleWishlist}
+                  className={`p-3 rounded-xl border transition-all duration-300 ${
+                    isWishlisted 
+                      ? 'bg-red-50 border-red-100 text-red-500 shadow-sm' 
+                      : 'bg-white border-slate-100 text-slate-400 hover:text-red-400 hover:bg-red-50 shadow-sm'
+                  }`}
+                >
+                  <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-current' : ''}`} />
+                </button>
+                {/* Tooltip */}
+                <div className="absolute bottom-full right-0 mb-2 w-32 bg-slate-900 text-white text-[10px] font-bold py-2 px-3 rounded-lg opacity-0 group-hover/wishlist:opacity-100 transition-opacity pointer-events-none shadow-xl z-20 text-center leading-tight">
+                  {isWishlisted ? t('products.wishlist_remove') : t('products.wishlist_add')}
+                  <div className="absolute top-full right-3 border-4 border-transparent border-t-slate-900" />
+                </div>
+              </div>
+
+              <button 
+                onClick={() => window.location.href = `/orcamento?add=${product.id}`}
+                className="w-10 h-10 rounded-xl border border-slate-100 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:border-blue-100 hover:bg-blue-50 transition-all"
+              >
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       </motion.div>
@@ -296,7 +308,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect, lay
       >
         <motion.img
           src={product.image}
-          alt={product.name}
+          alt={productName}
           className="max-w-full max-h-full object-contain"
           animate={{
             scale: isZoomed ? 2 : 1,
@@ -313,13 +325,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect, lay
             </div>
             {/* Tooltip */}
             <div className="absolute bottom-full right-0 mb-2 w-40 bg-slate-900 text-white text-[10px] font-bold py-2 px-3 rounded-lg opacity-0 group-hover/stock:opacity-100 transition-opacity pointer-events-none shadow-xl z-20 text-center leading-tight">
-              Produto em Stock
-              <span className="block text-[9px] font-medium text-slate-400 mt-1 uppercase tracking-wider">Disponível para entrega imediata</span>
+              {t('products.in_stock')}
+              <span className="block text-[9px] font-medium text-slate-400 mt-1 uppercase tracking-wider">{t('products.available_now')}</span>
               <div className="absolute top-full right-3 border-4 border-transparent border-t-slate-900" />
             </div>
           </div>
         )}
-
         {/* Action Buttons (Top Right) */}
         <div className="absolute top-4 right-4 flex items-center gap-2 z-20">
           {/* Share Button */}
@@ -365,25 +376,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect, lay
               )}
             </AnimatePresence>
           </div>
-
-          {/* Wishlist Button */}
-          <div className="group/wishlist">
-            <button
-              onClick={toggleWishlist}
-              className={`p-2 rounded-full backdrop-blur-md border transition-all duration-300 ${
-                isWishlisted 
-                  ? 'bg-red-50 border-red-100 text-red-500 shadow-sm' 
-                  : 'bg-white/80 border-slate-100 text-slate-400 hover:text-red-400 hover:bg-white shadow-sm'
-              }`}
-            >
-              <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-current' : ''}`} />
-            </button>
-            {/* Tooltip */}
-            <div className="absolute bottom-full right-0 mb-2 w-32 bg-slate-900 text-white text-[10px] font-bold py-2 px-3 rounded-lg opacity-0 group-hover/wishlist:opacity-100 transition-opacity pointer-events-none shadow-xl z-20 text-center leading-tight">
-              {isWishlisted ? 'Remover da Lista' : 'Lista de Desejos'}
-              <div className="absolute top-full right-3 border-4 border-transparent border-t-slate-900" />
-            </div>
-          </div>
         </div>
 
         {/* Quick Action Overlay */}
@@ -395,7 +387,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect, lay
         <div className="space-y-2 flex-grow">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-blue-600 uppercase tracking-[0.2em]">
-              {product.category}
+              {productCategory}
             </span>
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
               {product.volume || '1L'}
@@ -403,11 +395,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect, lay
           </div>
           
           <h3 className="text-base font-black text-slate-900 group-hover:text-blue-700 transition-colors leading-tight">
-            {product.name}
+            {productName}
           </h3>
           
           <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed font-medium">
-            {product.description}
+            {productDescription}
           </p>
 
           <div className="flex items-center pt-2">
@@ -416,7 +408,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect, lay
               className="inline-flex items-center gap-1.5 text-[10px] font-bold text-blue-600 hover:text-blue-800 transition-colors uppercase tracking-widest"
             >
               <FileText className="w-3 h-3" />
-              Ficha Técnica
+              {t('common.technical_sheet')}
             </button>
           </div>
         </div>
@@ -427,15 +419,36 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect, lay
             className="flex-1 bg-[#1e3a8a] text-white px-4 py-3 rounded-xl text-[10px] font-black hover:bg-blue-800 transition-all flex items-center justify-center space-x-2 shadow-lg shadow-blue-900/20 active:scale-95 group/btn"
           >
             <Plus className="w-3.5 h-3.5 transition-transform group-hover/btn:rotate-90" />
-            <span>ADICIONAR</span>
+            <span>{t('common.add')}</span>
           </button>
           
-          <button 
-            onClick={() => window.location.href = `/orcamento?add=${product.id}`}
-            className="w-10 h-10 rounded-xl border border-slate-100 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:border-blue-100 hover:bg-blue-50 transition-all"
-          >
-            <ArrowRight className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Wishlist Button */}
+            <div className="relative group/wishlist">
+              <button
+                onClick={toggleWishlist}
+                className={`p-3 rounded-xl border transition-all duration-300 ${
+                  isWishlisted 
+                    ? 'bg-red-50 border-red-100 text-red-500 shadow-sm' 
+                    : 'bg-white border-slate-100 text-slate-400 hover:text-red-400 hover:bg-red-50 shadow-sm'
+                }`}
+              >
+                <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-current' : ''}`} />
+              </button>
+              {/* Tooltip */}
+              <div className="absolute bottom-full right-0 mb-2 w-32 bg-slate-900 text-white text-[10px] font-bold py-2 px-3 rounded-lg opacity-0 group-hover/wishlist:opacity-100 transition-opacity pointer-events-none shadow-xl z-20 text-center leading-tight">
+                {isWishlisted ? t('products.wishlist_remove') : t('products.wishlist_add')}
+                <div className="absolute top-full right-3 border-4 border-transparent border-t-slate-900" />
+              </div>
+            </div>
+
+            <button 
+              onClick={() => window.location.href = `/orcamento?add=${product.id}`}
+              className="w-10 h-10 rounded-xl border border-slate-100 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:border-blue-100 hover:bg-blue-50 transition-all"
+            >
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
     </motion.div>

@@ -68,3 +68,13 @@ export interface QuoteRequest {
   status: 'Pendente' | 'Em Análise' | 'Concluído';
   created_at?: string;
 }
+
+export interface ManagedFile {
+  id: string;
+  name: string;
+  type: 'image' | 'pdf';
+  url: string;
+  storage_path: string;
+  category?: string;
+  created_at: string;
+}

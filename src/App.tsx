@@ -12,6 +12,7 @@ import { Contactos } from './pages/Contactos';
 import { Careers } from './pages/Careers';
 import { Partners } from './pages/Partners';
 import TechnicalInfo from './pages/TechnicalInfo';
+import { Admin } from './pages/Admin';
 import { LeadModal } from './components/forms/LeadModal';
 
 import { FloatingContactButtons } from './components/layout/FloatingContactButtons';
@@ -39,7 +40,8 @@ export default function App() {
             <Route path="/contactos" element={<Contactos />} />
             <Route path="/carreiras" element={<Careers />} />
             <Route path="/parceiros" element={<Partners />} />
-            <Route path="/informacao-tecnica" element={<TechnicalInfo />} />
+            <Route path="/sustentabilidade" element={<TechnicalInfo />} />
+            <Route path="/admin" element={<Admin />} />
           </Routes>
         </main>
 

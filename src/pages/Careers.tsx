@@ -2,8 +2,10 @@ import React, { useState, useRef } from 'react';
 import { motion } from 'motion/react';
 import { Briefcase, Send, CheckCircle2, AlertCircle, FileText, User, Mail, Phone, GraduationCap, Upload, X, File } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useTranslation } from 'react-i18next';
 
 export function Careers() {
+  const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,11 +26,11 @@ export function Careers() {
     const file = e.target.files?.[0];
     if (file) {
       if (file.type !== 'application/pdf') {
-        setError('Por favor, selecione um ficheiro PDF.');
+        setError(t('careers.errors.pdf_only'));
         return;
       }
       if (file.size > 10 * 1024 * 1024) {
-        setError('O ficheiro é demasiado grande. O limite máximo é 10MB.');
+        setError(t('careers.errors.file_too_large'));
         return;
       }
       setCvFile(file);
@@ -42,13 +44,13 @@ export function Careers() {
     setError(null);
 
     if (!supabase) {
-      setError('Supabase não configurado. Por favor, adicione VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY aos segredos.');
+      setError(t('careers.errors.supabase_not_configured'));
       setIsSubmitting(false);
       return;
     }
 
     if (!cvFile) {
-      setError('Por favor, anexe o seu currículo em formato PDF.');
+      setError(t('careers.errors.cv_required'));
       setIsSubmitting(false);
       return;
     }
@@ -88,15 +90,11 @@ export function Careers() {
 
       if (supabaseError) throw supabaseError;
 
-      // Simulação de envio de emails
-      console.log('Enviando email para RH: rh-provisorio@clorosol.pt com anexo:', publicUrl);
-      console.log('Enviando cópia de agradecimento para:', formData.email);
-
       setIsSubmitted(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err: any) {
       console.error('Erro ao submeter candidatura:', err);
-      setError('Ocorreu um erro ao enviar a sua candidatura. Por favor, verifique os dados e tente novamente.');
+      setError(t('careers.errors.submit_error'));
     } finally {
       setIsSubmitting(false);
     }
@@ -113,15 +111,15 @@ export function Careers() {
           <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle2 className="w-10 h-10 text-green-600" />
           </div>
-          <h2 className="text-2xl font-bold text-slate-900 mb-4">Obrigado</h2>
+          <h2 className="text-2xl font-bold text-slate-900 mb-4">{t('careers.form.success_title')}</h2>
           <p className="text-slate-600 mb-8 leading-relaxed">
-            Sua mensagem foi enviada com sucesso. Entraremos em contacto assim que possível!
+            {t('careers.form.success_message')}
           </p>
           <button 
             onClick={() => window.location.href = '/'}
             className="w-full bg-[#1e3a8a] text-white font-bold py-2.5 rounded-lg hover:bg-blue-800 transition-all shadow-lg shadow-blue-200 text-sm"
           >
-            Voltar ao Início
+            {t('careers.form.back_home')}
           </button>
         </motion.div>
       </div>
@@ -129,22 +127,38 @@ export function Careers() {
   }
 
   return (
-    <div className="pt-32 pb-20 bg-slate-50 min-h-screen">
+    <div className="pt-20 pb-20 bg-slate-50 min-h-screen">
+      {/* Hero Section with Background Image */}
+      <section className="relative h-[50vh] flex items-center overflow-hidden mb-12">
+        <div className="absolute inset-0 z-0">
+          <img
+            src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&q=80&w=1920"
+            alt="Careers Background"
+            className="w-full h-full object-cover"
+            referrerPolicy="no-referrer"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-900/80 to-transparent" />
+        </div>
+
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="max-w-2xl"
+          >
+            <div className="inline-flex items-center space-x-2 bg-blue-500/20 border border-blue-500/30 text-blue-300 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider mb-6 backdrop-blur-sm">
+              <Briefcase className="w-3.5 h-3.5" />
+              <span>{t('careers.badge')}</span>
+            </div>
+            <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 tracking-tight">{t('careers.title')}</h1>
+            <p className="text-xl text-blue-50 leading-relaxed font-medium">
+              {t('careers.subtitle')}
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
-        >
-          <div className="inline-flex items-center space-x-2 bg-blue-100 text-[#1e3a8a] px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider mb-4">
-            <Briefcase className="w-3.5 h-3.5" />
-            <span>Carreiras</span>
-          </div>
-          <h1 className="text-4xl font-black text-[#1e3a8a] mb-4 tracking-tight">Trabalhe Connosco</h1>
-          <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-            Junte-se a uma equipa dinâmica e inovadora no setor da higiene industrial. Aceitamos candidaturas espontâneas para diversas áreas.
-          </p>
-        </motion.div>
 
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
@@ -165,7 +179,7 @@ export function Careers() {
               <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-bold text-slate-700 ml-1">
                   <User className="w-4 h-4 text-blue-500" />
-                  <span>Nome Completo</span>
+                  <span>{t('careers.form.full_name')}</span>
                 </label>
                 <input 
                   required
@@ -181,7 +195,7 @@ export function Careers() {
               <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-bold text-slate-700 ml-1">
                   <Mail className="w-4 h-4 text-blue-500" />
-                  <span>Email de Contacto</span>
+                  <span>{t('careers.form.email')}</span>
                 </label>
                 <input 
                   required
@@ -197,7 +211,7 @@ export function Careers() {
               <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-bold text-slate-700 ml-1">
                   <Phone className="w-4 h-4 text-blue-500" />
-                  <span>Telemóvel / Telefone</span>
+                  <span>{t('careers.form.phone')}</span>
                 </label>
                 <input 
                   required
@@ -213,7 +227,7 @@ export function Careers() {
               <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-bold text-slate-700 ml-1">
                   <GraduationCap className="w-4 h-4 text-blue-500" />
-                  <span>Função Desejada</span>
+                  <span>{t('careers.form.role')}</span>
                 </label>
                 <select 
                   required
@@ -221,13 +235,13 @@ export function Careers() {
                   onChange={(e) => setFormData({...formData, desiredRole: e.target.value})}
                   className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-slate-800 font-medium bg-white appearance-none"
                 >
-                  <option value="">Selecione uma área...</option>
-                  <option value="Produção">Produção / Fábrica</option>
-                  <option value="Logística">Logística / Armazém</option>
-                  <option value="Comercial">Comercial / Vendas</option>
-                  <option value="Administrativo">Administrativo / Financeiro</option>
-                  <option value="Qualidade">Qualidade / Laboratório</option>
-                  <option value="Outra">Outra (Candidatura Espontânea)</option>
+                  <option value="">{t('careers.form.role_placeholder')}</option>
+                  <option value="Produção">{t('careers.form.roles.production')}</option>
+                  <option value="Logística">{t('careers.form.roles.logistics')}</option>
+                  <option value="Comercial">{t('careers.form.roles.commercial')}</option>
+                  <option value="Administrativo">{t('careers.form.roles.admin')}</option>
+                  <option value="Qualidade">{t('careers.form.roles.quality')}</option>
+                  <option value="Outra">{t('careers.form.roles.other')}</option>
                 </select>
               </div>
             </div>
@@ -236,7 +250,7 @@ export function Careers() {
             <div className="space-y-2">
               <label className="flex items-center space-x-2 text-sm font-bold text-slate-700 ml-1">
                 <Upload className="w-4 h-4 text-blue-500" />
-                <span>Anexar Currículo (PDF até 10MB)</span>
+                <span>{t('careers.form.cv')}</span>
               </label>
               <div 
                 onClick={() => fileInputRef.current?.click()}
@@ -278,8 +292,8 @@ export function Careers() {
                       <Upload className="w-6 h-6 text-slate-400 group-hover:text-blue-600" />
                     </div>
                     <div className="text-center">
-                      <p className="text-sm font-bold text-slate-700">Clique para carregar ou arraste o ficheiro</p>
-                      <p className="text-xs text-slate-400 mt-1">Apenas formato PDF (Máx. 10MB)</p>
+                      <p className="text-sm font-bold text-slate-700">{t('careers.form.cv_hint')}</p>
+                      <p className="text-xs text-slate-400 mt-1">{t('careers.form.cv_pdf_only')}</p>
                     </div>
                   </>
                 )}
@@ -290,7 +304,7 @@ export function Careers() {
             <div className="space-y-2">
               <label className="flex items-center space-x-2 text-sm font-bold text-slate-700 ml-1">
                 <FileText className="w-4 h-4 text-blue-500" />
-                <span>Resumo de Experiência / Motivação</span>
+                <span>{t('careers.form.experience')}</span>
               </label>
               <textarea 
                 required
@@ -298,7 +312,7 @@ export function Careers() {
                 value={formData.experience}
                 onChange={(e) => setFormData({...formData, experience: e.target.value})}
                 className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 outline-none transition-all text-slate-800 font-medium resize-none"
-                placeholder="Conte-nos um pouco sobre o seu percurso profissional..."
+                placeholder={t('careers.form.experience_placeholder')}
               ></textarea>
             </div>
 
@@ -316,7 +330,7 @@ export function Careers() {
                   <CheckCircle2 className="absolute h-5 w-5 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none p-0.5" />
                 </div>
                 <span className="text-xs text-slate-600 leading-relaxed">
-                  Autorizo o tratamento dos meus dados pessoais para efeitos de recrutamento, nos termos do <strong>Regulamento Geral sobre a Proteção de Dados (RGPD)</strong>. Os dados serão conservados pela Clorosol durante o período necessário para o processo de seleção.
+                  {t('careers.form.gdpr')}
                 </span>
               </label>
             </div>
@@ -334,12 +348,12 @@ export function Careers() {
               {isSubmitting ? (
                 <>
                   <div className="w-5 h-5 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" />
-                  <span className="text-sm">A enviar...</span>
+                  <span className="text-sm">{t('careers.form.submitting')}</span>
                 </>
               ) : (
                 <>
                   <Send className="w-4 h-4" />
-                  <span className="text-sm">Enviar</span>
+                  <span className="text-sm">{t('careers.form.submit')}</span>
                 </>
               )}
             </button>
@@ -347,7 +361,7 @@ export function Careers() {
         </motion.div>
 
         <div className="mt-12 text-center text-slate-400 text-sm">
-          <p>© 2026 Clorosol — Higiene Industrial. Todos os direitos reservados.</p>
+          <p>© 2026 Clorosol — Higiene Industrial. {t('footer.rights')}</p>
         </div>
       </div>
     </div>

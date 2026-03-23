@@ -1,20 +1,45 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Briefcase, ShoppingCart, MapPin, Phone, Mail } from 'lucide-react';
+import { Menu, X, Briefcase, ShoppingCart, MapPin, Phone, Mail, Heart } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { WishlistDrawer } from '../products/WishlistDrawer';
 
 export const Header: React.FC = () => {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = React.useState(false);
+  const [isWishlistOpen, setIsWishlistOpen] = React.useState(false);
+  const [wishlistCount, setWishlistCount] = useState(0);
   const location = useLocation();
+
+  const updateWishlistCount = () => {
+    const saved = localStorage.getItem('clorosol_wishlist');
+    if (saved) {
+      try {
+        const ids = JSON.parse(saved);
+        if (Array.isArray(ids)) {
+          setWishlistCount(ids.length);
+        }
+      } catch (e) {
+        setWishlistCount(0);
+      }
+    } else {
+      setWishlistCount(0);
+    }
+  };
+
+  useEffect(() => {
+    updateWishlistCount();
+    window.addEventListener('wishlistUpdated', updateWishlistCount);
+    return () => window.removeEventListener('wishlistUpdated', updateWishlistCount);
+  }, []);
 
   const navItems = [
     { name: t('nav.home'), path: '/' },
     { name: t('nav.about'), path: '/empresa' },
     { name: t('nav.products'), path: '/produtos' },
-    { name: t('nav.tech'), path: '/informacao-tecnica' },
+    { name: t('nav.tech'), path: '/sustentabilidade' },
   ];
 
   return (
@@ -70,6 +95,17 @@ export const Header: React.FC = () => {
 
             {/* Right Buttons */}
             <div className="hidden md:flex items-center space-x-3">
+              <button
+                onClick={() => setIsWishlistOpen(true)}
+                className="relative p-2 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all group"
+              >
+                <Heart className={`h-5 w-5 ${wishlistCount > 0 ? 'fill-red-500 text-red-500' : ''}`} />
+                {wishlistCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-sm border-2 border-white">
+                    {wishlistCount}
+                  </span>
+                )}
+              </button>
               <Link
                 to="/carreiras"
                 className="flex items-center space-x-2 px-3 py-1 rounded-lg border border-blue-200 text-blue-700 text-[10px] font-bold hover:bg-blue-50 transition-all"
@@ -87,7 +123,18 @@ export const Header: React.FC = () => {
             </div>
 
             {/* Mobile Menu Button */}
-            <div className="lg:hidden">
+            <div className="lg:hidden flex items-center space-x-2">
+              <button
+                onClick={() => setIsWishlistOpen(true)}
+                className="relative p-2 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all"
+              >
+                <Heart className={`h-5 w-5 ${wishlistCount > 0 ? 'fill-red-500 text-red-500' : ''}`} />
+                {wishlistCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-sm border-2 border-white">
+                    {wishlistCount}
+                  </span>
+                )}
+              </button>
               <button
                 onClick={() => setIsOpen(!isOpen)}
                 className="p-2 rounded-lg text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition-colors"
@@ -167,6 +214,9 @@ export const Header: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Wishlist Drawer */}
+      <WishlistDrawer isOpen={isWishlistOpen} onClose={() => setIsWishlistOpen(false)} />
     </header>
   );
 };

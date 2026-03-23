@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { FileText, Download, Search, Lock, CheckCircle, AlertCircle, Loader2, Calendar } from 'lucide-react';
+import { FileText, Download, Search, Lock, CheckCircle, AlertCircle, Loader2, Calendar, Filter } from 'lucide-react';
 import { PRODUCTS } from '../constants';
 import { Product } from '../types';
 import { supabase } from '../lib/supabase';
@@ -17,6 +17,8 @@ interface TechnicalFile {
 export default function TechnicalInfo() {
   const [searchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [activeTab, setActiveTab] = useState<'catalog' | 'technical'>('catalog');
   const [isUnlocked, setIsUnlocked] = useState(true);
   const [showUnlockForm, setShowUnlockForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -70,15 +72,19 @@ export default function TechnicalInfo() {
     fetchFiles();
   }, []);
 
-  const filteredProducts = PRODUCTS.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.brand.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredProducts = PRODUCTS.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         product.brand.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
 
-  const filteredFiles = technicalFiles.filter(file =>
-    file.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (file.product_name && file.product_name.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredFiles = technicalFiles.filter(file => {
+    const matchesSearch = file.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (file.product_name && file.product_name.toLowerCase().includes(searchTerm.toLowerCase()));
+    // For technical files, we don't have a category field yet, so we'll just filter by search for now
+    return matchesSearch;
+  });
 
   const handleUnlock = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,8 +99,8 @@ export default function TechnicalInfo() {
         {
           name: formData.name,
           email: formData.email,
-          message: `Solicitação de acesso a Informação Técnica. Empresa: ${formData.company}`,
-          subject: 'Acesso a Documentação Técnica',
+          message: `Solicitação de acesso a informações de Sustentabilidade. Empresa: ${formData.company}`,
+          subject: 'Acesso a Sustentabilidade e Documentação',
           source: 'Centro de Documentação'
         }
       ]);
@@ -117,254 +123,329 @@ export default function TechnicalInfo() {
     }
   };
 
-  const handleDownload = async (url: string | undefined, filename: string) => {
+  const handleDownload = (url: string | undefined, filename: string) => {
     if (!isUnlocked) {
       setShowUnlockForm(true);
       return;
     }
     if (!url) return;
 
-    try {
-      // Tentar download direto via fetch para forçar o comportamento de download
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('Falha ao descarregar o ficheiro');
-      
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      // Garantir que o nome termina em .pdf se não tiver extensão
-      const downloadName = filename.toLowerCase().endsWith('.pdf') ? filename : `${filename}.pdf`;
-      link.download = downloadName;
-      
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      // Limpar o URL do blob
-      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
-    } catch (error) {
-      console.error('Erro no download direto:', error);
-      // Fallback: abrir em novo separador se o fetch falhar (ex: CORS)
-      window.open(url, '_blank');
-    }
+    // Criar um elemento de link temporário para o download/abertura
+    const link = document.createElement('a');
+    link.href = url;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    
+    // O atributo 'download' funciona melhor em URLs da mesma origem, 
+    // mas serve como sugestão para o browser.
+    const downloadName = filename.toLowerCase().endsWith('.pdf') ? filename : `${filename}.pdf`;
+    link.setAttribute('download', downloadName);
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-24 pb-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <motion.h1 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-4xl font-bold text-gray-900 mb-4"
-          >
-            Informação Técnica
-          </motion.h1>
-          <motion.p 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-lg text-gray-600 max-w-2xl mx-auto"
-          >
-            Aceda às fichas técnicas e de segurança de todos os nossos produtos. 
-            Mantenha-se informado sobre as especificações e recomendações de utilização.
-          </motion.p>
-        </div>
-
-        {/* Search Bar */}
-        <div className="relative max-w-xl mx-auto mb-12">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input
-            type="text"
-            placeholder="Pesquisar por produto, marca ou documento..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+    <div className="min-h-screen bg-gray-50 pt-20 pb-16">
+      {/* Hero Section - Editorial Style */}
+      <section className="relative h-[60vh] flex items-center overflow-hidden mb-12">
+        <div className="absolute inset-0 z-0">
+          <img
+            src="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&q=80&w=1920"
+            alt="Sustainability Background"
+            className="w-full h-full object-cover"
+            referrerPolicy="no-referrer"
           />
+          <div className="absolute inset-0 bg-gradient-to-b from-blue-900/40 via-blue-900/60 to-gray-50" />
         </div>
 
-        {/* Section: Catálogo de Produtos */}
-        <div className="mb-16">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
-              <CheckCircle className="w-5 h-5" />
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full text-center">
+          <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="max-w-4xl mx-auto"
+          >
+            <span className="inline-block px-4 py-1.5 bg-blue-600/20 backdrop-blur-md text-blue-100 rounded-full text-xs font-bold uppercase tracking-widest mb-6 border border-white/10">
+              Compromisso Ambiental
+            </span>
+            <h1 className="text-6xl md:text-8xl font-bold text-white mb-8 tracking-tighter leading-none">
+              Sustentabilidade <br/>
+              <span className="text-blue-200 italic font-serif">& Documentação</span>
+            </h1>
+            <p className="text-xl text-blue-50 leading-relaxed font-medium max-w-2xl mx-auto">
+              Aceda às nossas práticas de sustentabilidade e documentação técnica. Transparência e rigor em cada processo.
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-24 relative z-20">
+        {/* Control Panel - Specialist Tool Style */}
+        <div className="bg-white/80 backdrop-blur-xl p-8 rounded-[2.5rem] shadow-2xl border border-white/20 mb-12">
+          <div className="flex flex-col lg:flex-row gap-8 items-center justify-between">
+            {/* Tab Switcher */}
+            <div className="flex p-1.5 bg-gray-100/80 rounded-2xl w-full lg:w-auto">
+              <button 
+                onClick={() => setActiveTab('catalog')}
+                className={`flex-1 lg:flex-none px-8 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+                  activeTab === 'catalog' ? 'bg-white text-blue-600 shadow-lg' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <CheckCircle className="w-4 h-4" />
+                <span>Catálogo de Produtos</span>
+              </button>
+              <button 
+                onClick={() => setActiveTab('technical')}
+                className={`flex-1 lg:flex-none px-8 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+                  activeTab === 'technical' ? 'bg-white text-blue-600 shadow-lg' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <FileText className="w-4 h-4" />
+                <span>Documentos Técnicos</span>
+              </button>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900">Catálogo de Produtos</h2>
-          </div>
-          
-          <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="bg-gray-50 border-bottom border-gray-100">
-                    <th className="px-8 py-5 text-xs font-bold text-gray-500 uppercase tracking-widest">Produto</th>
-                    <th className="px-8 py-5 text-xs font-bold text-gray-500 uppercase tracking-widest">Marca</th>
-                    <th className="px-8 py-5 text-xs font-bold text-gray-500 uppercase tracking-widest">Categoria</th>
-                    <th className="px-8 py-5 text-xs font-bold text-gray-500 uppercase tracking-widest text-right">Documento</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {filteredProducts.map((product) => (
-                    <motion.tr 
-                      key={product.id}
-                      layout
-                      className="hover:bg-gray-50/50 transition-colors group"
-                    >
-                      <td className="px-8 py-6">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
-                            <img 
-                              src={product.image} 
-                              alt={product.name}
-                              className="w-full h-full object-cover"
-                              referrerPolicy="no-referrer"
-                            />
-                          </div>
-                          <div>
-                            <div className="font-bold text-gray-900">{product.name}</div>
-                            <div className="text-sm text-gray-500">{product.volume}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-8 py-6">
-                        <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
-                          {product.brand}
-                        </span>
-                      </td>
-                      <td className="px-8 py-6 text-sm text-gray-600">
-                        {product.category}
-                      </td>
-                      <td className="px-8 py-6 text-right">
-                        <motion.button
-                          whileHover={{ scale: 1.05, y: -2, boxShadow: "0 10px 15px -3px rgba(59, 130, 246, 0.2)" }}
-                          whileTap={{ scale: 0.95 }}
-                          transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                          onClick={() => handleDownload(product.technical_sheet_url, `Ficha_Tecnica_${product.name}`)}
-                          className="inline-flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-bold transition-all bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white shadow-sm hover:shadow-md"
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                          Download PDF
-                        </motion.button>
-                      </td>
-                    </motion.tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            
-            {filteredProducts.length === 0 && (
-              <div className="px-8 py-12 text-center text-gray-500">
-                Nenhum produto encontrado para a sua pesquisa.
+
+            {/* Search & Filter */}
+            <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
+              <div className="relative flex-grow min-w-[300px]">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="text"
+                  placeholder="Pesquisar..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                />
               </div>
-            )}
+              
+              <div className="relative min-w-[200px]">
+                <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="w-full pl-12 pr-10 py-3.5 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all appearance-none cursor-pointer font-bold text-xs uppercase tracking-widest text-gray-600"
+                >
+                  <option value="all">Categorias</option>
+                  <option value="Lixívias">Lixívias</option>
+                  <option value="Detergentes">Detergentes</option>
+                  <option value="Industrial">Industrial</option>
+                </select>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Section: Arquivos Técnicos e de Segurança */}
-        <div className="mb-16">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
-              <FileText className="w-5 h-5" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900">Arquivos Técnicos e de Segurança</h2>
-          </div>
-
-          <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="bg-gray-50 border-bottom border-gray-100">
-                    <th className="px-8 py-5 text-xs font-bold text-gray-500 uppercase tracking-widest">Nome do Documento</th>
-                    <th className="px-8 py-5 text-xs font-bold text-gray-500 uppercase tracking-widest">Produto Associado</th>
-                    <th className="px-8 py-5 text-xs font-bold text-gray-500 uppercase tracking-widest">Data de Publicação</th>
-                    <th className="px-8 py-5 text-xs font-bold text-gray-500 uppercase tracking-widest text-right">Download</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {isLoadingFiles ? (
-                    <tr>
-                      <td colSpan={4} className="px-8 py-12 text-center">
-                        <div className="flex items-center justify-center gap-2 text-gray-500">
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                          <span>A carregar arquivos...</span>
-                        </div>
-                      </td>
+        {/* Main Content Area */}
+        <AnimatePresence mode="wait">
+          {activeTab === 'catalog' ? (
+            <motion.div
+              key="catalog"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="bg-white rounded-[2.5rem] shadow-xl overflow-hidden border border-gray-100"
+            >
+              <div className="p-8 border-b border-gray-50 flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-gray-900">Centro de Documentação</h2>
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                  {filteredProducts.length} Produtos Encontrados
+                </span>
+              </div>
+              
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="bg-gray-50/50">
+                      <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Produto</th>
+                      <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Marca</th>
+                      <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Categoria</th>
+                      <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Documento</th>
                     </tr>
-                  ) : filteredFiles.length > 0 ? (
-                    filteredFiles.map((file) => (
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {filteredProducts.map((product) => (
                       <motion.tr 
-                        key={file.id}
+                        key={product.id}
                         layout
-                        className="hover:bg-gray-50/50 transition-colors group"
+                        className="hover:bg-blue-50/30 transition-colors group"
                       >
                         <td className="px-8 py-6">
-                          <div className="flex items-center gap-3">
-                            <FileText className="w-5 h-5 text-blue-500" />
-                            <span className="font-bold text-gray-900">{file.name}</span>
+                          <div className="flex items-center gap-4">
+                            <div className="w-14 h-14 rounded-2xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-100 group-hover:border-blue-200 transition-colors">
+                              <img 
+                                src={product.image} 
+                                alt={product.name}
+                                className="w-full h-full object-cover"
+                                referrerPolicy="no-referrer"
+                              />
+                            </div>
+                            <div>
+                              <div className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{product.name}</div>
+                              <div className="text-xs font-medium text-gray-400 uppercase tracking-wider">{product.volume}</div>
+                            </div>
                           </div>
-                        </td>
-                        <td className="px-8 py-6 text-sm text-gray-600">
-                          {file.product_name || 'Geral'}
                         </td>
                         <td className="px-8 py-6">
-                          <div className="flex items-center gap-2 text-sm text-gray-500">
-                            <Calendar className="w-4 h-4" />
-                            {new Date(file.publication_date).toLocaleDateString('pt-PT')}
-                          </div>
+                          <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-lg text-[10px] font-black uppercase tracking-widest">
+                            {product.brand}
+                          </span>
+                        </td>
+                        <td className="px-8 py-6 text-xs font-bold text-gray-500 uppercase tracking-widest">
+                          {product.category}
                         </td>
                         <td className="px-8 py-6 text-right">
                           <motion.button
-                            whileHover={{ scale: 1.05, y: -2, boxShadow: "0 10px 15px -3px rgba(59, 130, 246, 0.2)" }}
+                            whileHover={{ scale: 1.05, y: -2 }}
                             whileTap={{ scale: 0.95 }}
-                            transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                            onClick={() => handleDownload(file.download_url, file.name)}
-                            className="inline-flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-bold transition-all bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white shadow-sm hover:shadow-md"
+                            onClick={() => handleDownload(product.technical_sheet_url, `Ficha_Tecnica_${product.name}`)}
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white shadow-sm"
                           >
                             <Download className="w-3.5 h-3.5" />
-                            Download
+                            PDF
                           </motion.button>
                         </td>
                       </motion.tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={4} className="px-8 py-12 text-center text-gray-500">
-                        Nenhum arquivo técnico encontrado.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              
+              {filteredProducts.length === 0 && (
+                <div className="px-8 py-20 text-center">
+                  <Search className="w-12 h-12 text-gray-200 mx-auto mb-4" />
+                  <p className="text-gray-500 font-medium">Nenhum produto encontrado para a sua pesquisa.</p>
+                </div>
+              )}
+            </motion.div>
+          ) : (
+            <motion.div
+              key="technical"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="bg-white rounded-[2.5rem] shadow-xl overflow-hidden border border-gray-100"
+            >
+              <div className="p-8 border-b border-gray-50 flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-gray-900">Arquivos Técnicos e de Segurança</h2>
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                  {filteredFiles.length} Documentos Disponíveis
+                </span>
+              </div>
 
-        {/* Benefits Section */}
-        <div className="mt-16 grid md:grid-cols-3 gap-8">
-          <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-            <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 mb-6">
-              <CheckCircle className="w-6 h-6" />
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="bg-gray-50/50">
+                      <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Documento</th>
+                      <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Assunto</th>
+                      <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Publicação</th>
+                      <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Ação</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {isLoadingFiles ? (
+                      <tr>
+                        <td colSpan={4} className="px-8 py-20 text-center">
+                          <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
+                          <span className="text-gray-500 font-medium">A carregar arquivos...</span>
+                        </td>
+                      </tr>
+                    ) : filteredFiles.length > 0 ? (
+                      filteredFiles.map((file) => (
+                        <motion.tr 
+                          key={file.id}
+                          layout
+                          className="hover:bg-blue-50/30 transition-colors group"
+                        >
+                          <td className="px-8 py-6">
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                <FileText className="w-6 h-6" />
+                              </div>
+                              <span className="font-bold text-gray-900">{file.name}</span>
+                            </div>
+                          </td>
+                          <td className="px-8 py-6 text-xs font-bold text-gray-500 uppercase tracking-widest">
+                            {file.product_name || 'Geral'}
+                          </td>
+                          <td className="px-8 py-6">
+                            <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest">
+                              <Calendar className="w-4 h-4" />
+                              {new Date(file.publication_date).toLocaleDateString('pt-PT')}
+                            </div>
+                          </td>
+                          <td className="px-8 py-6 text-right">
+                            <motion.button
+                              whileHover={{ scale: 1.05, y: -2 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => handleDownload(file.download_url, file.name)}
+                              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white shadow-sm"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                              Download
+                            </motion.button>
+                          </td>
+                        </motion.tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={4} className="px-8 py-20 text-center">
+                          <FileText className="w-12 h-12 text-gray-200 mx-auto mb-4" />
+                          <p className="text-gray-500 font-medium">Nenhum arquivo técnico encontrado.</p>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Benefits Section - Bento Style */}
+        <div className="mt-24 grid md:grid-cols-3 gap-8">
+          <motion.div 
+            whileHover={{ y: -5 }}
+            className="bg-white p-10 rounded-[2.5rem] shadow-sm border border-gray-100 relative overflow-hidden group"
+          >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-110" />
+            <div className="relative z-10">
+              <div className="w-14 h-14 bg-blue-600 text-white rounded-2xl flex items-center justify-center mb-8 shadow-lg shadow-blue-200">
+                <CheckCircle className="w-7 h-7" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Sempre Atualizado</h3>
+              <p className="text-gray-600 leading-relaxed">Garantimos que todos os documentos técnicos estão na sua versão mais recente, cumprindo as normas vigentes.</p>
             </div>
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Sempre Atualizado</h3>
-            <p className="text-gray-600 text-sm">Garantimos que todos os documentos técnicos estão na sua versão mais recente.</p>
-          </div>
-          <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-            <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 mb-6">
-              <FileText className="w-6 h-6" />
+          </motion.div>
+
+          <motion.div 
+            whileHover={{ y: -5 }}
+            className="bg-blue-600 p-10 rounded-[2.5rem] shadow-xl relative overflow-hidden group"
+          >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-110" />
+            <div className="relative z-10">
+              <div className="w-14 h-14 bg-white text-blue-600 rounded-2xl flex items-center justify-center mb-8 shadow-lg">
+                <FileText className="w-7 h-7" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-4">Fichas de Segurança</h3>
+              <p className="text-blue-50 leading-relaxed">Documentação completa em conformidade com as normas europeias de segurança e higiene industrial.</p>
             </div>
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Fichas de Segurança</h3>
-            <p className="text-gray-600 text-sm">Documentação completa em conformidade com as normas europeias de segurança.</p>
-          </div>
-          <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-            <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 mb-6">
-              <Lock className="w-6 h-6" />
+          </motion.div>
+
+          <motion.div 
+            whileHover={{ y: -5 }}
+            className="bg-white p-10 rounded-[2.5rem] shadow-sm border border-gray-100 relative overflow-hidden group"
+          >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-110" />
+            <div className="relative z-10">
+              <div className="w-14 h-14 bg-blue-600 text-white rounded-2xl flex items-center justify-center mb-8 shadow-lg shadow-blue-200">
+                <Lock className="w-7 h-7" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Acesso Exclusivo</h3>
+              <p className="text-gray-600 leading-relaxed">Área dedicada a profissionais e parceiros B2B para consulta rápida de especificações técnicas.</p>
             </div>
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Acesso Exclusivo</h3>
-            <p className="text-gray-600 text-sm">Área dedicada a profissionais e parceiros B2B para consulta rápida.</p>
-          </div>
+          </motion.div>
         </div>
       </div>
 

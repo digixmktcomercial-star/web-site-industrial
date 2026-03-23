@@ -70,32 +70,36 @@ export const Home: React.FC = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="max-w-3xl space-y-10"
+            className="max-w-4xl space-y-10"
           >
-            <div className="inline-flex items-center space-x-2 bg-blue-500/20 border border-blue-500/30 rounded-full px-4 py-1.5 text-blue-400 text-xs font-bold uppercase tracking-widest backdrop-blur-sm">
+            <div className="inline-flex items-center space-x-3 bg-blue-500/20 border border-blue-500/30 rounded-full px-4 py-1.5 text-blue-400 text-[10px] font-black uppercase tracking-[0.3em] backdrop-blur-md">
               <Zap className="h-3.5 w-3.5" />
               <span>{HERO_SLIDES[currentSlide].badge}</span>
             </div>
-            <h1 className="text-[45px] font-normal text-white leading-tight tracking-tighter">
-              {HERO_SLIDES[currentSlide].title}
+            <h1 className="text-[64px] md:text-[100px] font-normal text-white leading-[0.9] tracking-tighter">
+              {HERO_SLIDES[currentSlide].title.split(' ').map((word, i) => (
+                <span key={i} className={i % 2 === 1 ? 'italic text-slate-400' : ''}>
+                  {word}{' '}
+                </span>
+              ))}
             </h1>
-            <p className="text-xl md:text-2xl text-slate-300 leading-relaxed max-w-xl font-medium">
+            <p className="text-xl md:text-2xl text-slate-300 leading-relaxed max-w-2xl font-medium">
               {HERO_SLIDES[currentSlide].subtitle}
             </p>
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 pt-10">
               <Link
                 to="/produtos"
-                className="group relative bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-500 transition-all flex items-center space-x-3 shadow-[0_15px_40px_rgba(37,99,235,0.25)] hover:shadow-[0_20px_50px_rgba(37,99,235,0.4)] hover:-translate-y-1 active:scale-95 overflow-hidden"
+                className="group relative bg-blue-600 text-white px-10 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-blue-500 transition-all flex items-center space-x-4 shadow-[0_20px_50px_rgba(37,99,235,0.3)] hover:-translate-y-1 active:scale-95 overflow-hidden"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                <span className="relative z-10 text-base">{t('hero.cta_products')}</span>
-                <ArrowRight className="relative z-10 h-5 w-5 group-hover:translate-x-2 transition-transform" />
+                <span className="relative z-10">{t('hero.cta_products')}</span>
+                <ArrowRight className="relative z-10 h-4 w-4 group-hover:translate-x-2 transition-transform" />
               </Link>
               <button
                 onClick={() => window.dispatchEvent(new CustomEvent('openLeadModal'))}
-                className="group relative bg-[#0da4ed] backdrop-blur-2xl text-white border border-white/10 px-8 py-3 rounded-xl font-bold hover:bg-[#0da4ed]/90 transition-all hover:border-white/30 hover:-translate-y-1 active:scale-95 shadow-[0_15px_40px_rgba(13,164,237,0.25)]"
+                className="group relative bg-white/5 backdrop-blur-2xl text-white border border-white/10 px-10 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-white/10 transition-all hover:border-white/30 hover:-translate-y-1 active:scale-95 shadow-xl"
               >
-                <span className="text-base">{t('hero.cta_quote')}</span>
+                <span>{t('hero.cta_quote')}</span>
                 <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-blue-500 group-hover:w-1/2 transition-all duration-300" />
               </button>
             </div>
@@ -188,41 +192,34 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Sectors Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-          <div className="space-y-8">
-            <div className="space-y-2">
-              <h2 className="text-xs font-bold text-blue-600 uppercase tracking-widest">Sectores</h2>
-              <h3 className="text-4xl font-bold text-slate-900">Soluções para todos os Desafios</h3>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {[
-                { title: 'Horeca', desc: 'Higiene rigorosa para hotéis e restaurantes.' },
-                { title: 'Saúde', desc: 'Desinfecção hospitalar de alto nível.' },
-                { title: 'Indústria', desc: 'Detergentes técnicos para manutenção pesada.' },
-                { title: 'Doméstico', desc: 'A qualidade profissional no seu lar.' }
-              ].map((sector, i) => (
-                <div key={i} className="border-l-2 border-blue-100 pl-6 py-2">
-                  <h4 className="font-bold text-slate-900">{sector.title}</h4>
+      {/* Sectors Section - Redesigned to be more integrated */}
+      <section className="bg-slate-50 py-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-4">Sectores</h2>
+            <h3 className="text-4xl font-bold text-slate-900">Soluções para todos os Desafios</h3>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {[
+              { title: 'Horeca', desc: 'Higiene rigorosa para hotéis e restaurantes.', image: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&q=80&w=400' },
+              { title: 'Saúde', desc: 'Desinfecção hospitalar de alto nível.', image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=400' },
+              { title: 'Indústria', desc: 'Detergentes técnicos para manutenção pesada.', image: 'https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&q=80&w=400' },
+              { title: 'Doméstico', desc: 'A qualidade profissional no seu lar.', image: 'https://images.unsplash.com/photo-1583947581924-860bda6a26df?auto=format&fit=crop&q=80&w=400' }
+            ].map((sector, i) => (
+              <motion.div 
+                key={i}
+                whileHover={{ y: -10 }}
+                className="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100 group"
+              >
+                <div className="h-48 overflow-hidden">
+                  <img src={sector.image} alt={sector.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" referrerPolicy="no-referrer" />
+                </div>
+                <div className="p-6">
+                  <h4 className="font-bold text-slate-900 mb-2">{sector.title}</h4>
                   <p className="text-sm text-slate-500">{sector.desc}</p>
                 </div>
-              ))}
-            </div>
-          </div>
-          <div className="relative">
-            <div className="aspect-square rounded-[3rem] overflow-hidden shadow-2xl">
-              <img
-                src="https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&q=80&w=800"
-                alt="Limpeza Industrial"
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-              />
-            </div>
-            <div className="absolute -bottom-6 -left-6 bg-white p-8 rounded-3xl shadow-xl border border-slate-100 max-w-xs">
-              <p className="text-3xl font-bold text-blue-600">40+</p>
-              <p className="text-sm text-slate-500 font-medium">Anos de experiência no mercado industrial.</p>
-            </div>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
@@ -261,7 +258,7 @@ export const Home: React.FC = () => {
                   <span>Centro de Documentação</span>
                 </div>
                 <h2 className="text-[56px] font-normal leading-[1.1] tracking-tighter">
-                  Informação Técnica <br />
+                  Sustentabilidade <br />
                   <span className="text-slate-400 italic">ao seu Alcance.</span>
                 </h2>
                 <p className="text-slate-400 text-lg leading-relaxed max-w-md font-medium">
@@ -269,7 +266,7 @@ export const Home: React.FC = () => {
                 </p>
               </div>
               <Link
-                to="/informacao-tecnica"
+                to="/sustentabilidade"
                 className="inline-flex items-center space-x-4 bg-white text-slate-950 px-8 py-3.5 rounded-2xl font-black text-sm hover:bg-blue-500 hover:text-white transition-all shadow-xl group/btn active:scale-95"
               >
                 <span>Aceder à Documentação</span>
